@@ -3,11 +3,11 @@ package icu.chiou.qrbac.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import icu.chiou.qrbac.entity.Menu;
-import icu.chiou.qrbac.entity.MenuKey;
-import icu.chiou.qrbac.entity.PermissionEntity;
+import icu.chiou.qrbac.entity.*;
 import icu.chiou.qrbac.mapper.PermissionMapper;
 import icu.chiou.qrbac.service.PermissionService;
+import icu.chiou.qrbac.service.RolePermissionService;
+import icu.chiou.qrbac.service.UserRoleService;
 import icu.chiou.qrbac.utils.JwtUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -38,6 +39,12 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
     @Autowired
     PermissionMapper permissionMapper;
 
+    @Autowired
+    UserRoleService urService;
+
+    @Autowired
+    RolePermissionService rpService;
+
     @Override
     public Map<String, Object> getUserMenuList(HttpServletRequest request) {
         Map<String, Object> data = new HashMap<>();
@@ -45,10 +52,17 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         //获取用户id
         String userId = JwtUtil.getMemberIdByJwtToken(request);
 
-        //查询所有 菜单 权限列表 转为菜单对象
+        //查询用户对应角色所拥有的 权限列表 转为菜单对象
+        // 根据用户id查询对应的角色id
+        List<Integer> rIds = urService.list(new QueryWrapper<UserRoleEntity>().eq("u_id", userId).select("r_id")).stream().map(UserRoleEntity::getRId).collect(Collectors.toList());
+
+        // 根据角色查询对应的权限id
+        List<Integer> pIds = rpService.list(new QueryWrapper<RolePermissionEntity>().in("r_id", rIds).select("p_id")).stream().map(RolePermissionEntity::getPId).collect(Collectors.toList());
+
+        // 根据权限id查出权限
         List<Menu> allMenu = new ArrayList<>();
         permissionService
-                .list(new QueryWrapper<PermissionEntity>().ne("is_menu", "1"))
+                .list(new QueryWrapper<PermissionEntity>().ne("is_menu", "1").in("id", pIds))
                 .forEach(permissionEntity -> {
                     Menu menu = new Menu();
                     BeanUtils.copyProperties(permissionEntity, menu);
