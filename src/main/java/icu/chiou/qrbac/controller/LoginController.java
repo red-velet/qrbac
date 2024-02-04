@@ -25,7 +25,7 @@ public class LoginController {
     @PostMapping("/login")
     public R login(String name, String password) {
         LambdaQueryWrapper<UserEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(UserEntity::getUsername, name);
+        wrapper.eq(UserEntity::getName, name);
         UserEntity user = userService.getOne(wrapper);
         if (Objects.isNull(user)) {
             return R.error().message("账号不存在");

@@ -3,20 +3,17 @@ package icu.chiou.qrbac.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import icu.chiou.qrbac.entity.AuthorityDTO;
-import icu.chiou.qrbac.entity.RoleEntity;
-import icu.chiou.qrbac.entity.RolePermissionEntity;
-import icu.chiou.qrbac.entity.Tree;
+import icu.chiou.qrbac.entity.*;
 import icu.chiou.qrbac.service.RolePermissionService;
 import icu.chiou.qrbac.service.RoleService;
+import icu.chiou.qrbac.service.UserRoleService;
 import icu.chiou.qrbac.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * author: redvelet
@@ -95,5 +92,47 @@ public class RoleController {
                         .eq("r_id", id)
                         .select("p_id"))
                 .stream().map(RolePermissionEntity::getPId).toArray(Integer[]::new);
+    }
+
+    @GetMapping("/initRole")
+    public List<Map<String, Object>> initRole() {
+        // 查出所有角色
+        return roleService.list().stream()
+                .map(role -> {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("value", role.getId());
+                    data.put("title", role.getName());
+                    return data;
+                }).collect(Collectors.toList());
+    }
+
+    @Autowired
+    UserRoleService urService;
+
+    @GetMapping("/getRole/{id}")
+    public List<Integer> getRole(@PathVariable Integer id) {
+        return urService.list(
+                        new QueryWrapper<UserRoleEntity>()
+                                .eq("u_id", id)
+                                .select("r_id"))
+                .stream()
+                .map(UserRoleEntity::getRId)
+                .collect(Collectors.toList());
+    }
+
+    @PostMapping("/assignRole")
+    @Transactional
+    public R assignRole(@RequestBody AssignRoleDTO assignRoleDTO) {
+        Integer uId = assignRoleDTO.getUId();
+        urService.remove(new QueryWrapper<UserRoleEntity>().eq("u_id", uId));
+        List<UserRoleEntity> userRoles = new ArrayList<>();
+        for (Integer id : assignRoleDTO.getRId()) {
+            UserRoleEntity userRole = new UserRoleEntity();
+            userRole.setUId(uId);
+            userRole.setRId(id);
+            userRoles.add(userRole);
+        }
+        urService.saveBatch(userRoles);
+        return R.ok();
     }
 }

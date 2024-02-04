@@ -1,8 +1,11 @@
 package icu.chiou.qrbac.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.List;
 
 /**
  * <p>
@@ -27,12 +30,13 @@ public class UserEntity extends BaseEntity {
     /**
      * 用户名
      */
-    private String username;
+    private String name;
 
     /**
      * 密码
      */
     private String password;
 
-
+    @TableField(exist = false)
+    private List<String> roleName;
 }
