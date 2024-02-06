@@ -22,6 +22,13 @@ public class LoginController {
     @Autowired
     private UserService userService;
 
+    /**
+     * 登录接口
+     *
+     * @param name     用户名
+     * @param password 密码
+     * @return 统一返回格式R
+     */
     @PostMapping("/login")
     public R login(String name, String password) {
         LambdaQueryWrapper<UserEntity> wrapper = new LambdaQueryWrapper<>();

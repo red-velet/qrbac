@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * description: 统一异常处理类
  */
 @RestControllerAdvice(basePackages = "icu.chiou.qrbac")
-public class RBACException {
+public class RBACExceptionHandler {
     @ExceptionHandler(Exception.class)
     public R exceptionHandleAll(Exception e) {
         e.printStackTrace();

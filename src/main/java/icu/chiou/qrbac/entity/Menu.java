@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * author: redvelet
  * createTime: 2024/1/24
- * description:
+ * description: 菜单
  */
 @Data
 public class Menu implements Serializable {

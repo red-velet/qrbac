@@ -8,6 +8,7 @@ import icu.chiou.qrbac.mapper.PermissionMapper;
 import icu.chiou.qrbac.service.PermissionService;
 import icu.chiou.qrbac.service.RolePermissionService;
 import icu.chiou.qrbac.service.UserRoleService;
+import icu.chiou.qrbac.utils.AuthorityUtil;
 import icu.chiou.qrbac.utils.JwtUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -70,6 +68,7 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
                     allMenu.add(menu);
                 });
 
+
         //转为树形菜单
         //1.获取根节点菜单
         List<Menu> rootMenu = new ArrayList<>();
@@ -80,9 +79,13 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
             }
         }
         //2.根据根节点查找对应所有子节点
+        //初始化当前用户权限标识列表
+        HashSet<String> set = new HashSet<>();
         for (Menu menu : rootMenu) {
-            menu.getChild().add(findChildrenNode(menu, allMenu));
+            menu.getChild().add(findChildrenNode(menu, allMenu, set));
         }
+        AuthorityUtil.setAuthority(userId, set);
+
         // 保存用户权限
         MenuKey menuKey1 = new MenuKey();
         MenuKey menuKey2 = new MenuKey();
@@ -160,11 +163,14 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
         return permissionMapper.selectList(wrapper);
     }
 
-    private Menu findChildrenNode(Menu menu, List<Menu> menus) {
+    private Menu findChildrenNode(Menu menu, List<Menu> menus, HashSet<String> set) {
         menu.setChild(new ArrayList<>());
         for (Menu m : menus) {
+            if (m.getHref() != null) {
+                set.add(m.getHref());
+            }
             if (menu.getId() == m.getPId()) {
-                menu.getChild().add(findChildrenNode(m, menus));
+                menu.getChild().add(findChildrenNode(m, menus, set));
             }
         }
         return menu;

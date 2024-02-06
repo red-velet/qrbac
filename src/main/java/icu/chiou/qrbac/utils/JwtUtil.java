@@ -1,5 +1,6 @@
 package icu.chiou.qrbac.utils;
 
+import icu.chiou.qrbac.exception.RBACException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -83,7 +84,7 @@ public class JwtUtil {
      */
     public static String getMemberIdByJwtToken(HttpServletRequest request) {
         if (!checkToken(request)) {
-            throw new RuntimeException("token为空");
+            throw new RBACException(500, "token为空");
         }
         String jwtToken = request.getHeader("token");
         if (ObjectUtils.isEmpty(jwtToken)) return "";
