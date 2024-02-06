@@ -52,15 +52,26 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
 
         //查询用户对应角色所拥有的 权限列表 转为菜单对象
         // 根据用户id查询对应的角色id
-        List<Integer> rIds = urService.list(new QueryWrapper<UserRoleEntity>().eq("u_id", userId).select("r_id")).stream().map(UserRoleEntity::getRId).collect(Collectors.toList());
+        List<Integer> rIds = urService.list(
+                        new QueryWrapper<UserRoleEntity>()
+                                .eq("u_id", userId)
+                                .select("r_id"))
+                .stream()
+                .map(UserRoleEntity::getRId)
+                .collect(Collectors.toList());
 
         // 根据角色查询对应的权限id
-        List<Integer> pIds = rpService.list(new QueryWrapper<RolePermissionEntity>().in("r_id", rIds).select("p_id")).stream().map(RolePermissionEntity::getPId).collect(Collectors.toList());
+        List<Integer> pIds = rpService.list(
+                        new QueryWrapper<RolePermissionEntity>()
+                                .in("r_id", rIds)
+                                .select("p_id")).stream()
+                .map(RolePermissionEntity::getPId)
+                .collect(Collectors.toList());
 
         // 根据权限id查出权限
         List<Menu> allMenu = new ArrayList<>();
         permissionService
-                .list(new QueryWrapper<PermissionEntity>().ne("is_menu", "1").in("id", pIds))
+                .list(new QueryWrapper<PermissionEntity>().in("id", pIds))
                 .forEach(permissionEntity -> {
                     Menu menu = new Menu();
                     BeanUtils.copyProperties(permissionEntity, menu);
@@ -166,11 +177,13 @@ public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permiss
     private Menu findChildrenNode(Menu menu, List<Menu> menus, HashSet<String> set) {
         menu.setChild(new ArrayList<>());
         for (Menu m : menus) {
-            if (m.getHref() != null) {
-                set.add(m.getHref());
+            if (m.getPath() != null) {
+                set.add(m.getPath());
             }
-            if (menu.getId() == m.getPId()) {
-                menu.getChild().add(findChildrenNode(m, menus, set));
+            if (m.getIsMenu() != 1) {
+                if (menu.getId() == m.getPId()) {
+                    menu.getChild().add(findChildrenNode(m, menus, set));
+                }
             }
         }
         return menu;
